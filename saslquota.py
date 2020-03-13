@@ -1,15 +1,15 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-"""last_auth.py: Postfix Daemon that saves last sasl auth date ."""
+"""saslquota.py: Postfix Daemon that limit sender quota ."""
 
 __author__      = "Leandro Abelin Noskoski"
 __site__	= "www.alternativalinux.net"
-__projectpage__ = "https://github.com/noskoski/postfix_smtpd_last_auth"
-__copyright__   = "Copyright 2019, Alternativa Linux"
+__projectpage__ = "https://github.com/noskoski/postfix_saslauth"
+__copyright__   = "Copyright 2020, Alternativa Linux"
 __license__ 	= "GPL"
-__version__ 	= "1.0.1"
-__maintainer__ 	= "Rob Knight"
+__version__ 	= "1.0"
+__maintainer__ 	= "Leandro A. Noskoski"
 __email__ 	= "leandro@alternatialinux.net"
 __status__ 	= "Production"
 
@@ -18,9 +18,12 @@ from logging.handlers import SysLogHandler
 
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
 
-with open('saslquota.json') as json_data_file:
-    _conf = json.load(json_data_file)
-print(_conf)
+try:
+    with open('saslquota.json') as json_data_file:
+        _conf = json.load(json_data_file)
+except:
+    sys.stderr.write("can't open saslquota.json\n")
+    quit()
 
 logger = logging.getLogger()
 syslog = SysLogHandler(address='/dev/log', facility=str(_conf["_logfacility"]))
@@ -45,6 +48,7 @@ class Job(threading.Thread):
         thread.daemon = True                            # Daemonize thread
         thread.start()                                  # Start the execution
 
+## read the stream
     def recv_timeout(self):
 
         while not self.shutdown_flag.is_set():
@@ -83,21 +87,9 @@ class Job(threading.Thread):
         else :
             self.__sasl_username = None
 
-        ###### DO IT
-        #     self.__sasl_username=None
-        # else:
-        #     try:
-        #         self.sock.sendall(b"action=OK\n\n")
-        #         logging.debug(self.name + ' sending OK, go ahead')
-        #
-        #     except socket.error as e:
-        #         logging.error(self.name + " socket error: %s " % str(e) )
-
-    #####DATAREAD
-
     def run(self):
 
-        logging.debug('%s Thread  started' % self.name)
+        logging.debug('%s thread started' % self.name)
         self.recv_timeout()
         if self.__sasl_username :
 
@@ -106,7 +98,7 @@ class Job(threading.Thread):
                 with open(_conf["_quotafile"]) as jsonfile:
                     _quota = json.load(jsonfile)
             except:
-                logging.warning(self.name + " No Quota Rule File (" + _conf["_quotafile"] + ")")
+                logging.warning(self.name + " no quota rule file (" + _conf["_quotafile"] + ")")
 
             ## quota rule selection
             try:
@@ -182,7 +174,7 @@ class Job(threading.Thread):
 
 
         else:
-            logging.error(self.name + " No sasl_username in the stream")
+            logging.error(self.name + " no sasl_username in the stream")
             try:
                 self.sock.sendall(b"action=REJECT\n\n")
                 logging.debug(self.name + ' sending REJECT, :( ')
@@ -191,7 +183,7 @@ class Job(threading.Thread):
 
         self.sock.close()
         self.terminate = 1
-        logging.debug('%s Thread  stopped : (%.4f)' % (self.name, time.time() - self.starttime , ) )
+        logging.debug('%s thread stopped : (%.4f)' % (self.name, time.time() - self.starttime , ) )
 
 
 class ServiceExit(Exception):
@@ -199,7 +191,7 @@ class ServiceExit(Exception):
 
 # the thread
 def service_shutdown(signum, frame):
-    logging.debug('Caught signal %d' % signum)
+    logging.debug('caught signal %d' % signum)
     raise ServiceExit
 
 def Main():
@@ -235,9 +227,9 @@ def Main():
             c, addr = s.accept()
         except socket.error as e:
             logging.error("socket error: %s " % str(e) )
-            pass
+            continue
         except ServiceExit:
-            logging.warning("ServiceExit : " )
+            logging.warning("serviceExit : " )
             for th in aThreads:
                 th.shutdown_flag.set()
                 th.sock.close()
@@ -257,9 +249,9 @@ def Main():
             if th.terminate:
                 aThreads.remove(th)
 
-        logging.debug("Thread count: " + str(len(aThreads)) )
+        logging.debug("thread count: " + str(len(aThreads)) )
 
-    logging.debug('Close socket ')
+    logging.debug('close socket ')
 
 
     for process in aThreads:

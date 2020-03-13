@@ -7,6 +7,6 @@
    "_mypasswd" : "1a2b3c",
    "_mydb": "saslquota",
    "_logfacility": "mail",
-   "_loglevel": "INFO",
-   "_quotafile": "quotarule.json"
+   "_loglevel": "DEBUG",
+   "_quotafile": "quotarules.json"
 }
