@@ -136,7 +136,8 @@ class Job(threading.Thread):
                 _cursor = _con.cursor()
                 _cursor.execute("select count(*) from Log where sasl_username =%s  and `date` >= DATE_SUB(now(6), INTERVAL %s SECOND)",(self.__sasl_username,_period,))
                 record = _cursor.fetchone()
-                logging.info(self.name + ' sasl_username=' + self.__sasl_username + ", rule=" + _rule + ", quota (" + str(record[0]) + "/" + str(_msgquota) + "), period=" + str(_period))
+
+                _log = self.name + ' sasl_username=' + self.__sasl_username + ", rule=" + _rule + ", quota " + str(record[0]) + "/" + str(_msgquota)  + " (" +  "{0:.2f}".format(record[0] / _msgquota * 100) + "%), period=" + str(_period)
             except:
                 logging.warning(self.name + " error reading mysql log ")
             finally:
@@ -146,7 +147,7 @@ class Job(threading.Thread):
             if int(record[0]) <  int(_msgquota) :
                 try :
                     self.sock.sendall(b"action=OK\n\n")
-                    logging.debug(self.name + ' sending OK, go ahead ')
+                    logging.info(_log + ", action=ACCEPT ")
                     try:
                         _cursor = _con.cursor()
                         _cursor.execute("insert into Log (sasl_username, date ) values (%s,now(6)) ",
@@ -162,7 +163,7 @@ class Job(threading.Thread):
             else:
                 try :
                     self.sock.sendall(b"action=REJECT (" + bytes(_msg, 'utf-8') + b")\n\n")
-                    logging.info(self.name + ' action=REJECT ' + _msg)
+                    logging.info(_log + ', action=REJECT ' + _msg)
                 except socket.error as e:
                     logging.error(self.name + " socket error: %s " % str(e))
 
