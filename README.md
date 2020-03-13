@@ -1,8 +1,8 @@
-last_auth.py
+POSTIFX_SASLQUOTA
 
 Objective:
 
-Use Postfix access control to save the last sasl authentication (smtps or submission )  (date, not datetime ) of an user in mysql 
+Use Postfix access control to limit sender quantities in a period of time 
 
 
 
@@ -10,38 +10,74 @@ Instalation:
 
   1 - install needed packages 
   ubuntu/debain:
-    apt install supervisor python3-mysqldb
+    apt install supervisor python3
+    pip install mysql-connector-python
     
-  2 - copy and edit last_auth.conf
+  2 - copy and edit saslquota_supervisor.conf
   
-       cp last_auth.conf /etc/supervisor/conf.d/ 
+       cp saslquota_supervisor.conf /etc/supervisor/conf.d/ 
   
 
-  3 - edit those lines in /etc/postfix/last_auth.py    
+  3 - edit configuration in saslquota.json  
 
-  _bind='127.0.0.1'
-  _bindport=10007
-  _myhost="localhost"
-  _myuser="last_access"
-  _mypasswd="XXXXXXXX"
-  _mydb="mail"
-  _mytable="mailbox"
-  _mycolumn="last_auth"
+{
+   "_bind" : "127.0.0.1",
+   "_bindport" : 10008,
+   "_bindtimeout" :  45,
+   "_myhost" : "localhost",
+   "_myuser" : "saslquota",
+   "_mypasswd" : "*******",
+   "_mydb": "saslquota",
+   "_logfacility": "mail",
+   "_loglevel": "DEBUG",
+   "_quotafile": "quotarules.json"
+}
 
-  4 - create column in mysql
+  3 - setup the quotas quoptarules.json:
+  
+  {
+   "default" : {
+     "period": 120,
+     "msgquota": 500,
+     "msg": " Ops!!! Você já mandou o limite de 500 emails no intervalo de 120 segundos, tente novamente mais tarde "
+   },
+   "localhost" : {
+     "period": 1200,
+     "msgquota": 5000,
+     "msg": " Ops!!! você já mandou o limite de 5000 emails no intervalo de 1200 segundos, tente novamente mais tarde "
+   },
+   "root@localhost" : {
+     "period": 300,
+     "msgquota": 50,
+     "msg": " Ops!!! você já mandou o limite de 50 emails no intervalo de 300 segundos, tente novamente mais tarde  "
+   }
+   }
 
-        ALTER TABLE `mailbox` ADD `last_auth` DATE NULL DEFAULT NULL; 
+
+
+
+
+  4 - create mysql database and grant access
+
+        create database saslquota; 
+        grant all on saslquita.* to saslquota@localhost identified by '*******' ;
+        flush privileges;
+        
+  5 - import database structure
+        root@:/# mysql -uroot -p  saslquota < mysql.sql
  
-  5 - Restart supervisord
-    service supervisor restart
+  5 - Restart supervisord an verify if is working
+        - service supervisor restart
+        - supervisorctl
+          supervisor>  help      :) 
    
   6 - add line to /etc/postfix/main.cf
   
-    smtpd_last_auth = check_policy_service inet:127.0.0.1:10008 #change to the value of _bindport 
+    saslquota = check_policy_service inet:127.0.0.1:10008 #change to the value of _bindport 
   
   7 - modify you /etc/postfix/master.cf ( smtps or/and submission entry do not use this in smtp  )
 
-     -o smtpd_end_of_data_restrictions=$smtpd_last_auth
+     -o smtpd_client_restrictions=$saslquota
   
   8 - service postfix reload   
 
@@ -52,12 +88,12 @@ Test:
  
   1 - verify if the daemon are listening:
         
-        netstat -nl |grep 10007 ( use your _bindport value )
+        netstat -nl |grep 10008 ( use your _bindport value )
         
     
   2 - The test
  
-      cat Testfile | netcat 127.0.0.1 10007
+      cat Testfile | netcat 127.0.0.1 10008
       
       response:
       action=OK 
@@ -65,13 +101,17 @@ Test:
       -----
       see the mail/syslog log too:
       
-      Feb 27 11:36:29 mail postfix/last_auth[102313]:[410] sasl_username:(root@localhost)
-      Feb 27 11:36:29 mail postfix/last_auth[102313]:[410] _affected_rows: 1
+   Mar 13 10:53:00 mail postfix/saslquota[55354]:[1167] thread started
+   Mar 13 10:53:00 mail postfix/saslquota[55354]:[1167] end of recv: (659)
+   Mar 13 10:53:00 mail postfix/saslquota[55354]:[1167] quota rule selected: (default)
+   Mar 13 10:53:00 mail postfix/saslquota[55354]:thread count: 2
+   Mar 13 10:53:00 mail postfix/saslquota[55354]:[1167] sasl_username=contabilidade2@XXXXXXXX.br, rcpt=gabine@YYYYYYY.br, rule=default, quota 4/1500 (0.27%), period=86400, action=ACCEPT
+   Mar 13 10:53:00 mail postfix/saslquota[55354]:[1167] thread stopped : (0.0784)
+
   
   3 - Try to send an email with an authenticated user and see the mail log
       
-
-      
+     
 
 
  
