@@ -8,5 +8,5 @@
    "_mydb": "saslquota",
    "_logfacility": "mail",
    "_loglevel": "INFO",
-   "_quotafile": "_quotafile.json"
+   "_quotafile": "quotarule.json"
 }
