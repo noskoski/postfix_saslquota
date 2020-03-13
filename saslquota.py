@@ -41,6 +41,7 @@ class Job(threading.Thread):
         self.sock = sock
         self.name = name
         self.__sasl_username = None
+        self.__recipient = None
         self.__end='\n\n'
         self.__total_data = ""
         self.terminate = 0
@@ -82,10 +83,10 @@ class Job(threading.Thread):
 
         if (len(str(self.__total_data))>10):
             for item in self.__total_data.split("\n"):
-                if 'sasl_username' in item:
+                if 'sasl_username=' in item:
                     self.__sasl_username = item.split('=')[1]
-        else :
-            self.__sasl_username = None
+                if 'recipient=' in item:
+                    self.__recipient = item.split('=')[1]
 
     def run(self):
 
@@ -137,7 +138,7 @@ class Job(threading.Thread):
                 _cursor.execute("select count(*) from Log where sasl_username =%s  and `date` >= DATE_SUB(now(6), INTERVAL %s SECOND)",(self.__sasl_username,_period,))
                 record = _cursor.fetchone()
 
-                _log = self.name + ' sasl_username=' + self.__sasl_username + ", rule=" + _rule + ", quota " + str(record[0]) + "/" + str(_msgquota)  + " (" +  "{0:.2f}".format(record[0] / _msgquota * 100) + "%), period=" + str(_period)
+                _log = self.name + ' sasl_username=' + self.__sasl_username + ", rcpt=" + str(self.__recipient) + ", rule=" + _rule + ", quota " + str(record[0]) + "/" + str(_msgquota)  + " (" +  "{0:.2f}".format(record[0] / _msgquota * 100) + "%), period=" + str(_period)
             except:
                 logging.warning(self.name + " error reading mysql log ")
             finally:
