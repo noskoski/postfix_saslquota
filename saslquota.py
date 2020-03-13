@@ -10,7 +10,7 @@ __copyright__   = "Copyright 2020, Alternativa Linux"
 __license__ 	= "GPL"
 __version__ 	= "1.0"
 __maintainer__ 	= "Leandro A. Noskoski"
-__email__ 	= "leandro@alternatialinux.net"
+__email__ 	= "leandro@alternativalinux.net"
 __status__ 	= "Production"
 
 import socket,struct,sys,time, logging, re,  mysql.connector, syslog, errno, signal, threading, unicodedata,json
