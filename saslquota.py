@@ -1,0 +1,278 @@
+#!/usr/bin/python3
+# -*- coding: utf-8 -*-
+
+"""last_auth.py: Postfix Daemon that saves last sasl auth date ."""
+
+__author__      = "Leandro Abelin Noskoski"
+__site__	= "www.alternativalinux.net"
+__projectpage__ = "https://github.com/noskoski/postfix_smtpd_last_auth"
+__copyright__   = "Copyright 2019, Alternativa Linux"
+__license__ 	= "GPL"
+__version__ 	= "1.0.1"
+__maintainer__ 	= "Rob Knight"
+__email__ 	= "leandro@alternatialinux.net"
+__status__ 	= "Production"
+
+import socket,struct,sys,time, logging, re,  mysql.connector, syslog, errno, signal, threading, unicodedata,json
+from logging.handlers import SysLogHandler
+
+logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
+
+with open('saslquota.json') as json_data_file:
+    _conf = json.load(json_data_file)
+print(_conf)
+
+logger = logging.getLogger()
+syslog = SysLogHandler(address='/dev/log', facility=str(_conf["_logfacility"]))
+formatter = logging.Formatter('postfix/%(module)s[%(process)d]:%(message)s')
+syslog.setFormatter(formatter)
+logger.addHandler(syslog)
+logger.setLevel(logging.getLevelName(_conf["_loglevel"]))
+
+class Job(threading.Thread):
+
+    def __init__(self,sock,name):
+        threading.Thread.__init__(self)
+        self.starttime = time.time()
+        self.shutdown_flag = threading.Event()
+        self.sock = sock
+        self.name = name
+        self.__sasl_username = None
+        self.__end='\n\n'
+        self.__total_data = ""
+        self.terminate = 0
+        thread = threading.Thread(target=self.run, args=())
+        thread.daemon = True                            # Daemonize thread
+        thread.start()                                  # Start the execution
+
+    def recv_timeout(self):
+
+        while not self.shutdown_flag.is_set():
+
+            try:
+                data=self.sock.recv(1024)
+                if data == b'':
+                    break
+                self.__total_data  = self.__total_data + data.decode("UTF-8","ignore")
+                if self.__end in data.decode("UTF-8","ignore") :
+                    break
+            except UnicodeDecodeError as e:
+                logging.error(self.name + " unicode error: %s " % str(e) )
+                break
+
+            except KeyboardInterrupt:
+                logging.error(self.name + ' CTRL-C HIT')
+                break
+
+            except socket.error as e:
+                logging.error(self.name + " socket error: %s " % str(e) )
+                break
+
+            except socket.timeout as e:
+                logging.error(self.name + " socket timeout: %s " % str(e) )
+                break
+
+        logging.debug(self.name + " end of recv: (" + str(len(self.__total_data)) + ")")
+
+        ##extracts sasl_username value ( or not)
+
+        if (len(str(self.__total_data))>10):
+            for item in self.__total_data.split("\n"):
+                if 'sasl_username' in item:
+                    self.__sasl_username = item.split('=')[1]
+        else :
+            self.__sasl_username = None
+
+        ###### DO IT
+        #     self.__sasl_username=None
+        # else:
+        #     try:
+        #         self.sock.sendall(b"action=OK\n\n")
+        #         logging.debug(self.name + ' sending OK, go ahead')
+        #
+        #     except socket.error as e:
+        #         logging.error(self.name + " socket error: %s " % str(e) )
+
+    #####DATAREAD
+
+    def run(self):
+
+        logging.debug('%s Thread  started' % self.name)
+        self.recv_timeout()
+        if self.__sasl_username :
+
+            ## load quota rules
+            try:
+                with open(_conf["_quotafile"]) as jsonfile:
+                    _quota = json.load(jsonfile)
+            except:
+                logging.warning(self.name + " No Quota Rule File (" + _conf["_quotafile"] + ")")
+
+            ## quota rule selection
+            try:
+                if _quota[self.__sasl_username]:   ##By email
+                    logging.debug(self.name + " quota rule selected: (" + str(self.__sasl_username) + ")")
+                    _rule  = self.__sasl_username
+                    _period = _quota[self.__sasl_username]["period"]
+                    _msgquota = _quota[self.__sasl_username]["msgquota"]
+                    _msg = _quota[self.__sasl_username]["msg"]
+            except:
+                try:
+                    if _quota[self.__sasl_username.split("@")[1]]:  #By domain
+                        logging.debug(self.name + " quota rule selected: (" + str(self.__sasl_username.split("@")[1]) + ")")
+                        _rule = self.__sasl_username.split("@")[1]
+                        _period = _quota[self.__sasl_username.split("@")[1]]["period"]
+                        _msgquota = _quota[self.__sasl_username.split("@")[1]]["msgquota"]
+                        _msg = _quota[self.__sasl_username.split("@")[1]]["msg"]
+                except:
+                    try:
+                        if _quota["default"]:                          #By default Rule
+                            logging.debug(self.name + " quota rule selected: (default)")
+                            _rule = "default"
+                            _period = _quota["default"]["period"]
+                            _msgquota = _quota["default"]["msgquota"]
+                            _msg = _quota["default"]["msg"]
+                    except:
+                        logging.warning(self.name + " No default quota Rule \"default\", forging one, 5000 per day per email")
+                        _rule = "forged"
+                        _period = 86400
+                        _msgquota = 5001
+                        _msg = "Sorry you send too much mails, wait and send it later..."
+
+            try:
+                _con = mysql.connector.connect(host=_conf["_myhost"], user=_conf["_myuser"], passwd=_conf["_mypasswd"], db=_conf["_mydb"])
+                _cursor = _con.cursor()
+                _cursor.execute("select count(*) from Log where sasl_username =%s  and `date` >= DATE_SUB(now(6), INTERVAL %s SECOND)",(self.__sasl_username,_period,))
+                record = _cursor.fetchone()
+                logging.info(self.name + ' sasl_username=' + self.__sasl_username + ", rule=" + _rule + ", quota (" + str(record[0]) + "/" + str(_msgquota) + "), period=" + str(_period))
+            except:
+                logging.warning(self.name + " error reading mysql log ")
+            finally:
+                _cursor.close()
+
+            ### decision REJECT/ACCEPT
+            if int(record[0]) <  int(_msgquota) :
+                try :
+                    self.sock.sendall(b"action=OK\n\n")
+                    logging.debug(self.name + ' sending OK, go ahead ')
+                    try:
+                        _cursor = _con.cursor()
+                        _cursor.execute("insert into Log (sasl_username, date ) values (%s,now(6)) ",
+                                        (self.__sasl_username,))
+                        _con.commit()
+                    except:
+                        logging.warning(self.name + " error inserting log entry for %s " % str(self.__sasl_username))
+                        _con.rollback()
+                    finally:
+                        _cursor.close()
+                except socket.error as e:
+                    logging.error(self.name + " socket error: %s " % str(e))
+            else:
+                try :
+                    self.sock.sendall(b"action=REJECT (" + bytes(_msg, 'utf-8') + b")\n\n")
+                    logging.info(self.name + ' action=REJECT ' + _msg)
+                except socket.error as e:
+                    logging.error(self.name + " socket error: %s " % str(e))
+
+
+
+
+            #except socket.error as e:
+            #    logging.error(self.name + " socket error: %s " % str(e) )
+
+
+        else:
+            logging.error(self.name + " No sasl_username in the stream")
+            try:
+                self.sock.sendall(b"action=REJECT\n\n")
+                logging.debug(self.name + ' sending REJECT, :( ')
+            except socket.error as e:
+                logging.error(self.name + " socket error: %s " % str(e) )
+
+        self.sock.close()
+        self.terminate = 1
+        logging.debug('%s Thread  stopped : (%.4f)' % (self.name, time.time() - self.starttime , ) )
+
+
+class ServiceExit(Exception):
+    pass
+
+# the thread
+def service_shutdown(signum, frame):
+    logging.debug('Caught signal %d' % signum)
+    raise ServiceExit
+
+def Main():
+
+    socket.setdefaulttimeout(int(_conf["_bindtimeout"]))
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    signal.signal(signal.SIGTERM, service_shutdown)
+    signal.signal(signal.SIGINT, service_shutdown)
+    logging.debug('default timeout: ' + str(s.gettimeout()))
+    i = 1
+    aThreads = []
+    sockok=0
+
+    while (not sockok):
+
+        try:
+            s.bind( (_conf["_bind"] , _conf["_bindport"]) )
+            logging.debug('socket binded to port: ' + str(_conf["_bindport"]))
+            # put the socket into listening mode
+            s.listen(128)
+            logging.debug('socket is listening')
+            sockok=1
+
+        except socket.error as e:
+            logging.error("socket error: %s " % str(e) )
+            time.sleep(2)
+
+
+    # a forever loop until client wants to exit
+    while True:
+        try:
+            c, addr = s.accept()
+        except socket.error as e:
+            logging.error("socket error: %s " % str(e) )
+            pass
+        except ServiceExit:
+            logging.warning("ServiceExit : " )
+            for th in aThreads:
+                th.shutdown_flag.set()
+                th.sock.close()
+                th.join()
+        # lock acquired by client
+        # Start a new thread and return its identifier
+        if c:
+            logging.debug('connected to :' + str(addr[0]) + ':' + str(addr[1]))
+            process = (Job(c,"[" + str(i) + "]"))
+            aThreads.append(process)
+
+        i += 1
+        if (i > 99999):
+            i = 0
+
+        for th in aThreads:
+            if th.terminate:
+                aThreads.remove(th)
+
+        logging.debug("Thread count: " + str(len(aThreads)) )
+
+    logging.debug('Close socket ')
+
+
+    for process in aThreads:
+        process.join()
+
+    try:
+        s.close()
+    except:
+        pass
+
+
+    self.terminate = 1
+
+
+if __name__ == '__main__':
+    Main()
