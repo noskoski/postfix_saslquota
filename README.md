@@ -16,6 +16,8 @@ Instalation:
   2 - copy and edit saslquota_supervisor.conf
   
        cp saslquota_supervisor.conf /etc/supervisor/conf.d/ 
+       
+       edit the content of saslquota_supervisor.conf
   
 
   3 - edit configuration in saslquota.json  
@@ -33,7 +35,7 @@ Instalation:
    	"_quotafile": "quotarules.json"
 	}
 
-  3 - setup the quotas quoptarules.json:
+  3 - setup the quotas quotarules.json:
   
   	{
    	"default" : {
@@ -60,7 +62,7 @@ Instalation:
   4 - create mysql database and grant access
 
         create database saslquota; 
-        grant all on saslquita.* to saslquota@localhost identified by '*******' ;
+        grant all on saslquota.* to saslquota@localhost identified by '*******' ;
         flush privileges;
         
   5 - import database structure
