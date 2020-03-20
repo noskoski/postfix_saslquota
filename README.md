@@ -1,9 +1,8 @@
-POSTIFX_SASLQUOTA
+POSTFIX_SASLQUOTA
 
 Objective:
 
-Use Postfix access control to limit sender quantities in a period of time 
-
+An simple alternative to Policyd ( only quota module for now ), ligther and easy to configure. 
 
 
 Instalation:
