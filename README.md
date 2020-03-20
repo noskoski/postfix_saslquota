@@ -78,14 +78,19 @@ Instalation:
   
     saslquota = check_policy_service inet:127.0.0.1:10008 #change to the value of _bindport 
   
-  7 - modify you /etc/postfix/master.cf ( smtps or/and submission entry do not use this in smtp  )
-
-     -o smtpd_client_restrictions=$saslquota
+  7 - modify you /etc/postfix/master.cf ( smtps(465) or/and submission (587) entry, do not use this in smtp(25)  )
+	
+	submission inet n       -       y       -       -       smtpd 
+  	-o syslog_name=postfix/submission
+  	-o smtpd_tls_security_level=may
+  	-o smtpd_sasl_auth_enable=yes
+  	-o smtpd_tls_auth_only=no
+  	-o smtpd_reject_unlisted_recipient=no
+  	-o smtpd_client_restrictions=$saslquota    <<<<< here
   
   8 - service postfix reload   
 
- 
- 
+  
 
 Test:
  
