@@ -2,7 +2,7 @@ POSTFIX_SASLQUOTA
 
 Objective:
 
-An simple alternative to Policyd ( only quota module for now ), ligther and easy to configure. 
+An simple alternative to Policyd ( only quota module for now ), lighter and easy to configure. 
 
 
 Instalation:
