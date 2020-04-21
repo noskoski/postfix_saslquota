@@ -138,7 +138,7 @@ class Job(threading.Thread):
                 _cursor.execute("select count(*) from Log where sasl_username =%s  and `date` >= DATE_SUB(now(6), INTERVAL %s SECOND)",(self.__sasl_username,_period,))
                 record = _cursor.fetchone()
 
-                _log = self.name + ' sasl_username=' + self.__sasl_username + ", rcpt=" + str(self.__recipient) + ", rule=" + _rule + ", quota " + str(record[0]+1) + "/" + str(_msgquota)  + " (" +  "{0:.2f}".format(record[0] / _msgquota * 100) + "%), period=" + str(_period)
+                _log = self.name + ' sasl_username=' + self.__sasl_username + ", rcpt=" + str(self.__recipient) + ", rule=" + _rule + ", quota " + str(record[0]+1) + "/" + str(_msgquota)  + " (" +  "{0:.2f}".format( ( record[0] + 1 ) / _msgquota * 100) + "%), period=" + str(_period)
             except:
                 logging.warning(self.name + " error reading mysql log ")
             finally:
