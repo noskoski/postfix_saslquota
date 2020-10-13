@@ -1,12 +1,12 @@
 {
    "_bind" : "127.0.0.1",
    "_bindport" : 10008,
-   "_bindtimeout" :  45,
+   "_bindtimeout" :  120,
    "_myhost" : "localhost",
    "_myuser" : "saslquota",
    "_mypasswd" : "1a2b3c",
    "_mydb": "saslquota",
    "_logfacility": "mail",
-   "_loglevel": "DEBUG",
+   "_loglevel": "INFO",
    "_quotafile": "quotarules.json"
 }
