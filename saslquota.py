@@ -8,7 +8,7 @@ __site__	= "www.alternativalinux.net"
 __projectpage__ = "https://github.com/noskoski/postfix_saslauth"
 __copyright__   = "Copyright 2020, Alternativa Linux"
 __license__ 	= "GPL"
-__version__ 	= "1.0"
+__version__ 	= "1.1"
 __maintainer__ 	= "Leandro A. Noskoski"
 __email__ 	= "leandro@alternativalinux.net"
 __status__ 	= "Production"
@@ -25,23 +25,18 @@ except:
     sys.stderr.write("can't open saslquota.json\n")
     quit()
 
-print(_conf["_bind"])
-##OVERWRITE with environment variables (docker)
+##OVERWRITE with environment variables (Dockerfile)
 for k, v in os.environ.items():
     _conf[k] = v
-    print(f'{k}={v}')
-print(_conf["_bind"])
-
-#if "_bind" in os.environ:
-#    _conf.["_bindport"] = os.environ['_bindport']
-
 
 logger = logging.getLogger()
-syslog = SysLogHandler(address='localhost', facility=str(_conf["_logfacility"]))
+syslog = SysLogHandler(address=(str(_conf["_logaddress"]),514), facility=str(_conf["_logfacility"]))
 formatter = logging.Formatter('postfix/%(module)s[%(process)d]:%(message)s')
 syslog.setFormatter(formatter)
 logger.addHandler(syslog)
 logger.setLevel(logging.getLevelName(_conf["_loglevel"]))
+
+
 
 class Job(threading.Thread):
 
@@ -237,7 +232,7 @@ def Main():
             time.sleep(2)
 
         except socket.timeout as e:
-            logging.error("socket error: %s " % str(e) )
+            logging.warning("socket error: %s " % str(e) )
 
 
     # a forever loop until client wants to exit

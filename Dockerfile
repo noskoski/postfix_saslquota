@@ -17,6 +17,7 @@ ENV _bind=0.0.0.0 \
   _mydb=saslquota \
   _logfacility=mail \
   _logaddress=localhost \
+  _logport=514 \ #UDP
   _loglevel=DEBUG  \
   _quotafile=quotarules.json
 
