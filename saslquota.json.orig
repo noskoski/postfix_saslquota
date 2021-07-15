@@ -1,8 +1,8 @@
 {
-   "_bind" : "127.0.0.1",
+   "_bind" : "0.0.0.0",
    "_bindport" : 10008,
    "_bindtimeout" :  45,
-   "_myhost" : "localhost",
+   "_myhost" : "mysql",
    "_myuser" : "saslquota",
    "_mypasswd" : "1a2b3c",
    "_mydb": "saslquota",

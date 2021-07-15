@@ -13,7 +13,7 @@ __maintainer__ 	= "Leandro A. Noskoski"
 __email__ 	= "leandro@alternativalinux.net"
 __status__ 	= "Production"
 
-import socket,struct,sys,time, logging, re,  mysql.connector, syslog, errno, signal, threading, unicodedata,json
+import os,socket,struct,sys,time, logging, re,  mysql.connector, syslog, errno, signal, threading, unicodedata,json
 from logging.handlers import SysLogHandler
 
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
@@ -24,6 +24,17 @@ try:
 except:
     sys.stderr.write("can't open saslquota.json\n")
     quit()
+
+print(_conf["_bind"])
+##OVERWRITE with environment variables (docker)
+for k, v in os.environ.items():
+    _conf[k] = v
+    print(f'{k}={v}')
+print(_conf["_bind"])
+
+#if "_bind" in os.environ:
+#    _conf.["_bindport"] = os.environ['_bindport']
+
 
 logger = logging.getLogger()
 syslog = SysLogHandler(address='/dev/log', facility=str(_conf["_logfacility"]))
@@ -197,6 +208,9 @@ def service_shutdown(signum, frame):
     raise ServiceExit
 
 def Main():
+    #try to connect at the start
+    _con = mysql.connector.connect(host=_conf["_myhost"], user=_conf["_myuser"], passwd=_conf["_mypasswd"], db=_conf["_mydb"])
+    _con.close()
 
     socket.setdefaulttimeout(int(_conf["_bindtimeout"]))
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -221,6 +235,9 @@ def Main():
         except socket.error as e:
             logging.error("socket error: %s " % str(e) )
             time.sleep(2)
+
+        except socket.timeout as e:
+            logging.error("socket error: %s " % str(e) )
 
 
     # a forever loop until client wants to exit
