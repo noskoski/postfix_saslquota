@@ -8,7 +8,17 @@ WORKDIR /postfix_saslquota
 
 RUN git clone --progress --verbose  https://github.com/noskoski/postfix_saslquota /postfix_saslquota
 
-#COPY requirements.txt saslquota.py mysql.sql saslquota.json ./
+ENV _bind=0.0.0.0 \
+  _bindport=10008 \
+  _bindtimeout=120 \
+  _myhost=mysql \
+  _myuser=saslquota \
+  _mypasswd=1a2b3c \
+  _mydb=saslquota \
+  _logfacility=mail \
+  _logaddress=localhost \
+  _loglevel=DEBUG  \
+  _quotafile=quotarules.json
 
 RUN mv quotarules.json.orig quotarules.json
 

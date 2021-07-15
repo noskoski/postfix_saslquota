@@ -37,7 +37,7 @@ print(_conf["_bind"])
 
 
 logger = logging.getLogger()
-syslog = SysLogHandler(address='/dev/log', facility=str(_conf["_logfacility"]))
+syslog = SysLogHandler(address='localhost', facility=str(_conf["_logfacility"]))
 formatter = logging.Formatter('postfix/%(module)s[%(process)d]:%(message)s')
 syslog.setFormatter(formatter)
 logger.addHandler(syslog)
