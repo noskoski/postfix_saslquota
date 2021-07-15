@@ -1,4 +1,4 @@
-FROM python:3.7
+FROM python:3.9
 
 MAINTAINER "leandro@alternativalinux.net"
 
@@ -17,11 +17,11 @@ ENV _bind=0.0.0.0 \
   _mydb=saslquota \
   _logfacility=mail \
   _logaddress=localhost \
-  _logport=514 \ #UDP
-  _loglevel=DEBUG  \
+  _logport=514 \
+  _loglevel=INFO \
   _quotafile=quotarules.json
 
-RUN mv quotarules.json.orig quotarules.json
+RUN mv  /postfix_saslquota/quotarules.json.orig  /postfix_saslquota/quotarules.json
 
 RUN pip install mysql-connector-python
 

@@ -30,7 +30,7 @@ for k, v in os.environ.items():
     _conf[k] = v
 
 logger = logging.getLogger()
-syslog = SysLogHandler(address=(str(_conf["_logaddress"]),514), facility=str(_conf["_logfacility"]))
+syslog = SysLogHandler(address=(str(_conf["_logaddress"]),int(_conf["_logport"])),facility=str(_conf["_logfacility"]) )
 formatter = logging.Formatter('postfix/%(module)s[%(process)d]:%(message)s')
 syslog.setFormatter(formatter)
 logger.addHandler(syslog)
@@ -80,7 +80,7 @@ class Job(threading.Thread):
                 break
 
             except socket.timeout as e:
-                logging.error(self.name + " socket timeout: %s " % str(e) )
+                logging.warning(self.name + " socket timeout: %s " % str(e) )
                 break
 
         logging.debug(self.name + " end of recv: (" + str(len(self.__total_data)) + ")")
@@ -220,7 +220,7 @@ def Main():
     while (not sockok):
 
         try:
-            s.bind( (_conf["_bind"] , _conf["_bindport"]) )
+            s.bind( ( str(_conf["_bind"]) , int(_conf["_bindport"])) )
             logging.debug('socket binded to port: ' + str(_conf["_bindport"]))
             # put the socket into listening mode
             s.listen(128)
