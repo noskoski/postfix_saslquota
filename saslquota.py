@@ -80,7 +80,7 @@ class Job(threading.Thread):
                 break
 
             except socket.timeout as e:
-                logging.warning(self.name + " socket timeout: %s " % str(e) )
+                logging.debug(self.name + " socket timeout: %s " % str(e) )
                 break
 
         logging.debug(self.name + " end of recv: (" + str(len(self.__total_data)) + ")")
@@ -232,7 +232,7 @@ def Main():
             time.sleep(2)
 
         except socket.timeout as e:
-            logging.warning("socket error: %s " % str(e) )
+            logging.debug("socket error: %s " % str(e) )
 
 
     # a forever loop until client wants to exit
