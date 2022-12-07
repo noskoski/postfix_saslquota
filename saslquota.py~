@@ -16,7 +16,7 @@ __status__ 	    = "Production"
 import os,socket,struct,sys,time, logging, re,  mysql.connector, syslog, errno, signal, threading, unicodedata,json
 from logging.handlers import SysLogHandler
 
-logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
+logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
 
 try:
     with open('saslquota.json') as json_data_file:
@@ -30,14 +30,10 @@ for k, v in os.environ.items():
     _conf[k] = v
 
 logger = logging.getLogger()
-if _conf["_loghandler"] == 'syslog' :
-    syslog = SysLogHandler(address=(str(_conf["_logaddress"]),int(_conf["_logport"])),facility=str(_conf["_logfacility"]) )
-    formatter = logging.Formatter('postfix/%(module)s[%(process)d]:%(message)s')
-    syslog.setFormatter(formatter)
-    logger.addHandler(syslog)
-else:    
-    logger.addHandler(logging.StreamHandler(sys.stdout))    
-
+syslog = SysLogHandler(address=(str(_conf["_logaddress"]),int(_conf["_logport"])),facility=str(_conf["_logfacility"]) )
+formatter = logging.Formatter('postfix/%(module)s[%(process)d]:%(message)s')
+syslog.setFormatter(formatter)
+logger.addHandler(syslog)
 logger.setLevel(logging.getLevelName(_conf["_loglevel"]))
 
 
