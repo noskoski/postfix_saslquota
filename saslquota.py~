@@ -30,10 +30,14 @@ for k, v in os.environ.items():
     _conf[k] = v
 
 logger = logging.getLogger()
-syslog = SysLogHandler(address=(str(_conf["_logaddress"]),int(_conf["_logport"])),facility=str(_conf["_logfacility"]) )
-formatter = logging.Formatter('postfix/%(module)s[%(process)d]:%(message)s')
-syslog.setFormatter(formatter)
-logger.addHandler(syslog)
+if _conf["_loghandler"] == 'syslog' :
+    syslog = SysLogHandler(address=(str(_conf["_logaddress"]),int(_conf["_logport"])),facility=str(_conf["_logfacility"]) )
+    formatter = logging.Formatter('postfix/%(module)s[%(process)d]:%(message)s')
+    syslog.setFormatter(formatter)
+    logger.addHandler(syslog)
+else:    
+    logger.addHandler(logging.StreamHandler(sys.stdout))    
+
 logger.setLevel(logging.getLevelName(_conf["_loglevel"]))
 
 

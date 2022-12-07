@@ -4,19 +4,19 @@
 """saslquota.py: Postfix Daemon that limit sender quota ."""
 
 __author__      = "Leandro Abelin Noskoski"
-__site__	    = "www.alternativalinux.net"
+__site__	= "www.alternativalinux.net"
 __projectpage__ = "https://github.com/noskoski/postfix_saslauth"
 __copyright__   = "Copyright 2020, Alternativa Linux"
 __license__ 	= "GPL"
-__version__ 	= "1.1"
+__version__ 	= "1.5"
 __maintainer__ 	= "Leandro A. Noskoski"
-__email__ 	    = "leandro@alternativalinux.net"
-__status__ 	    = "Production"
+__email__ 	= "leandro@alternativalinux.net"
+__status__ 	= "Production"
 
 import os,socket,struct,sys,time, logging, re,  mysql.connector, syslog, errno, signal, threading, unicodedata,json
 from logging.handlers import SysLogHandler
 
-logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
+logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
 
 try:
     with open('saslquota.json') as json_data_file:

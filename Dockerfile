@@ -41,6 +41,6 @@ RUN pip install mysql-connector-python
 
 HEALTHCHECK CMD netstat -an | grep ${_bindport} > /dev/null; if [ 0 != $? ]; then exit 1; fi;
 
-VOLUME ["/postfix_saslquota"]
+#VOLUME ["/postfix_saslquota"]
 
 CMD [ "python", "/postfix_saslquota/saslquota.py" ]
