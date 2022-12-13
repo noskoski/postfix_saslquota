@@ -84,7 +84,7 @@ class Job(threading.Thread):
                 break
 
             except socket.error as e:
-                logging.error(self.name + " socket error: %s " % str(e) )
+                logging.warning(self.name + " socket error: %s " % str(e) )
                 break
 
 
@@ -171,13 +171,13 @@ class Job(threading.Thread):
                     finally:
                         _cursor.close()
                 except socket.error as e:
-                    logging.error(self.name + " socket error: %s " % str(e))
+                    logging.warning(self.name + " socket error: %s " % str(e))
             else:
                 try :
                     self.sock.sendall(b"action=REJECT (" + bytes(_msg, 'utf-8') + b")\n\n")
                     logging.info(_log + ', action=REJECT ' + _msg)
                 except socket.error as e:
-                    logging.error(self.name + " socket error: %s " % str(e))
+                    logging.warning(self.name + " socket error: %s " % str(e))
 
 
 
@@ -192,7 +192,7 @@ class Job(threading.Thread):
                 self.sock.sendall(b"action=REJECT\n\n")
                 logging.debug(self.name + ' sending REJECT, :( ')
             except socket.error as e:
-                logging.error(self.name + " socket error: %s " % str(e) )
+                logging.warning(self.name + " socket error: %s " % str(e) )
 
         self.sock.close()
         self.terminate = 1
@@ -237,7 +237,7 @@ def Main():
             continue
 
         except socket.error as e:
-            logging.error("socket error in startup: %s " % str(e) )
+            logging.warning("socket error in startup: %s " % str(e) )
             time.sleep(2)
             continue
 
@@ -248,7 +248,7 @@ def Main():
         try:
             c, addr = s.accept()
         except socket.error as e:
-            logging.error("socket error: %s " % str(e) )
+            logging.warning("socket error: %s " % str(e) )
             continue
         except ServiceExit:
             logging.warning("serviceExit : " )

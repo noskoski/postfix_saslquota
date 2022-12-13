@@ -79,13 +79,14 @@ class Job(threading.Thread):
                 logging.error(self.name + ' CTRL-C HIT')
                 break
 
+            except socket.timeout as e:
+                logging.debug(self.name + " socket timeout: %s " % str(e) )
+                break
+
             except socket.error as e:
                 logging.error(self.name + " socket error: %s " % str(e) )
                 break
 
-            except socket.timeout as e:
-                logging.debug(self.name + " socket timeout: %s " % str(e) )
-                break
 
         logging.debug(self.name + " end of recv: (" + str(len(self.__total_data)) + ")")
 
@@ -231,14 +232,15 @@ def Main():
             logging.debug('socket is listening')
             sockok=1
 
+        except socket.timeout as e:
+            logging.debug("socket error in startup: %s " % str(e) )
+            continue
+
         except socket.error as e:
             logging.error("socket error in startup: %s " % str(e) )
             time.sleep(2)
             continue
 
-        except socket.timeout as e:
-            logging.debug("socket error in startup: %s " % str(e) )
-            continue
 
 
     # a forever loop until client wants to exit
