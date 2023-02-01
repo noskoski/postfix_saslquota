@@ -13,6 +13,5 @@
    "_quotafile": "quotarules.json",
    "_loghandler": "syslog",
    "_ssl_cert": "/etc/ssl/certs/ssl-cert-snakeoil.pem",
-   "_ssl_ca": "/etc/ssl/certs/ca-certificates.crt",
    "_ssl_key": "/etc/ssl/private/ssl-cert-snakeoil.key"
 }
