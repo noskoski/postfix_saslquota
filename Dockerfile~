@@ -37,7 +37,7 @@ ENV _bind=0.0.0.0 \
 
 RUN mv  /postfix_saslquota/quotarules.json.orig  /postfix_saslquota/quotarules.json
 
-RUN pip3 install mysql-connector
+RUN pip install mysql-connector-python
 
 HEALTHCHECK CMD netstat -an | grep ${_bindport} > /dev/null; if [ 0 != $? ]; then exit 1; fi;
 
