@@ -84,7 +84,7 @@ class Job(threading.Thread):
                 break
 
             except socket.error as e:
-                logging.error(self.name + " socket error: %s " % str(e) )
+                logging.warning(self.name + " socket error: %s " % str(e) )
                 break
 
 
@@ -144,7 +144,8 @@ class Job(threading.Thread):
                         _msg = "Sorry you send too much mails, wait and send it later..."
 
             try:
-                _con = mysql.connector.connect(host=_conf["_myhost"], user=_conf["_myuser"], passwd=_conf["_mypasswd"], db=_conf["_mydb"])
+                _ssl =  { "cert": _conf["_sslcert"], "key": _conf["_sslkey"] }
+                _con = mysql.connector.connect(host=_conf["_myhost"], user=_conf["_myuser"], passwd=_conf["_mypasswd"], db=_conf["_mydb"], ssl=_ssl)
                 _cursor = _con.cursor()
                 _cursor.execute("select count(*) from saslquota_log where sasl_username =%s  and `date` >= DATE_SUB(now(6), INTERVAL %s SECOND)",(self.__sasl_username,_period,))
                 record = _cursor.fetchone()
@@ -171,13 +172,13 @@ class Job(threading.Thread):
                     finally:
                         _cursor.close()
                 except socket.error as e:
-                    logging.error(self.name + " socket error: %s " % str(e))
+                    logging.warning(self.name + " socket error: %s " % str(e))
             else:
                 try :
                     self.sock.sendall(b"action=REJECT (" + bytes(_msg, 'utf-8') + b")\n\n")
                     logging.info(_log + ', action=REJECT ' + _msg)
                 except socket.error as e:
-                    logging.error(self.name + " socket error: %s " % str(e))
+                    logging.warning(self.name + " socket error: %s " % str(e))
 
 
 
@@ -192,7 +193,7 @@ class Job(threading.Thread):
                 self.sock.sendall(b"action=REJECT\n\n")
                 logging.debug(self.name + ' sending REJECT, :( ')
             except socket.error as e:
-                logging.error(self.name + " socket error: %s " % str(e) )
+                logging.warning(self.name + " socket error: %s " % str(e) )
 
         self.sock.close()
         self.terminate = 1
@@ -237,7 +238,7 @@ def Main():
             continue
 
         except socket.error as e:
-            logging.error("socket error in startup: %s " % str(e) )
+            logging.warning("socket error in startup: %s " % str(e) )
             time.sleep(2)
             continue
 
@@ -248,7 +249,7 @@ def Main():
         try:
             c, addr = s.accept()
         except socket.error as e:
-            logging.error("socket error: %s " % str(e) )
+            logging.warning("socket error: %s " % str(e) )
             continue
         except ServiceExit:
             logging.warning("serviceExit : " )

@@ -10,5 +10,7 @@
    "_logport" : 514,
    "_logfacility": "mail",
    "_loglevel": "INFO",
-   "_quotafile": "quotarules.json"
+   "_quotafile": "quotarules.json",
+   "_loghandler": "syslog"
+   
 }

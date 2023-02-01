@@ -144,7 +144,8 @@ class Job(threading.Thread):
                         _msg = "Sorry you send too much mails, wait and send it later..."
 
             try:
-                _con = mysql.connector.connect(host=_conf["_myhost"], user=_conf["_myuser"], passwd=_conf["_mypasswd"], db=_conf["_mydb"])
+                _ssl =  { "cert": _conf["_sslcert"], "key": _conf["_sslkey"] }
+                _con = mysql.connector.connect(host=_conf["_myhost"], user=_conf["_myuser"], passwd=_conf["_mypasswd"], db=_conf["_mydb"], ssl=_ssl)
                 _cursor = _con.cursor()
                 _cursor.execute("select count(*) from saslquota_log where sasl_username =%s  and `date` >= DATE_SUB(now(6), INTERVAL %s SECOND)",(self.__sasl_username,_period,))
                 record = _cursor.fetchone()
@@ -209,7 +210,8 @@ def service_shutdown(signum, frame):
 
 def Main():
     #try to connect at the start
-    _con = mysql.connector.connect(host=_conf["_myhost"], user=_conf["_myuser"], passwd=_conf["_mypasswd"], db=_conf["_mydb"])
+    _ssl =  { "cert": _conf["_sslcert"], "key": _conf["_sslkey"] }
+    _con = mysql.connector.connect(host=_conf["_myhost"], user=_conf["_myuser"], passwd=_conf["_mypasswd"], db=_conf["_mydb"], ssl=_ssl)
     _con.close()
 
     socket.setdefaulttimeout(int(_conf["_bindtimeout"]))
