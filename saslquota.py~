@@ -210,7 +210,8 @@ def service_shutdown(signum, frame):
 
 def Main():
     #try to connect at the start
-    _con = mysql.connector.connect(host=_conf["_myhost"], user=_conf["_myuser"], passwd=_conf["_mypasswd"], db=_conf["_mydb"])
+    _ssl =  { "cert": _conf["_sslcert"], "key": _conf["_sslkey"] }
+    _con = mysql.connector.connect(host=_conf["_myhost"], user=_conf["_myuser"], passwd=_conf["_mypasswd"], db=_conf["_mydb"], ssl=_ssl)
     _con.close()
 
     socket.setdefaulttimeout(int(_conf["_bindtimeout"]))

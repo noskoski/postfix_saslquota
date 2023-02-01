@@ -11,6 +11,8 @@
    "_logfacility": "mail",
    "_loglevel": "INFO",
    "_quotafile": "quotarules.json",
-   "_loghandler": "syslog"
+   "_loghandler": "syslog",
+   "_sslcert": "/etc/ssl/certs/ssl-cert-snakeoil.pem",
+   "_sslkey": "/etc/ssl/private/ssl-cert-snakeoil.key"
    
 }
