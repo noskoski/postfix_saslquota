@@ -13,9 +13,8 @@ __maintainer__ 	= "Leandro A. Noskoski"
 __email__ 	= "leandro@alternativalinux.net"
 __status__ 	= "Production"
 
-import os,socket,struct,sys,time, logging, re,  mysql.connector, syslog, errno, signal, threading, unicodedata,json,ssl
+import os,socket,struct,sys,time, logging, re,  mysql.connector, syslog, errno, signal, threading, unicodedata,json
 from logging.handlers import SysLogHandler
-from mysql.connector.constants import ClientFlag
 
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
 
@@ -145,9 +144,9 @@ class Job(threading.Thread):
                         _msg = "Sorry you send too much mails, wait and send it later..."
 
             try:
-                _con = mysql.connector.connect(host=_conf["_myhost"], user=_conf["_myuser"], passwd=_conf["_mypasswd"], db=_conf["_mydb"], ssl_cert=_conf["_ssl_cert"], ssl_key=_conf["_ssl_key"], ssl_ca=_conf["_ssl_ca"])
+                _con = mysql.connector.connect(host=_conf["_myhost"], user=_conf["_myuser"], passwd=_conf["_mypasswd"], db=_conf["_mydb"])
                 _cursor = _con.cursor()
-                _cursor.execute("select count(*) from saslquota_log where sasl_username =%s  and `date` >= DATE_SUB(now(6), INTERVAL %s SECOND)",(self.__sasl_username,_period,))
+                _cursor.execute("select count(*) from log where sasl_username =%s  and `date` >= DATE_SUB(now(6), INTERVAL %s SECOND)",(self.__sasl_username,_period,))
                 record = _cursor.fetchone()
 
                 _log = self.name + ' sasl_username=' + self.__sasl_username + ", rcpt=" + str(self.__recipient) + ", rule=" + _rule + ", quota=" + str(record[0]+1) + "/" + str(_msgquota)  + "(" +  "{0:.2f}".format( ( record[0] + 1 ) / _msgquota * 100) + "%), period=" + str(_period)
@@ -163,7 +162,7 @@ class Job(threading.Thread):
                     logging.info(_log + ", action=ACCEPT ")
                     try:
                         _cursor = _con.cursor()
-                        _cursor.execute("insert into saslquota_log (sasl_username, date ) values (%s,now(6)) ",
+                        _cursor.execute("insert into log (sasl_username, date ) values (%s,now(6)) ",
                                         (self.__sasl_username,))
                         _con.commit()
                     except:
@@ -193,6 +192,7 @@ class Job(threading.Thread):
                 self.sock.sendall(b"action=REJECT\n\n")
                 logging.debug(self.name + ' sending REJECT, :( ')
             except socket.error as e:
+                
                 logging.warning(self.name + " socket error: %s " % str(e) )
 
         self.sock.close()
@@ -211,7 +211,7 @@ def service_shutdown(signum, frame):
 def Main():
     #try to connect at the start
 
-    _con = mysql.connector.connect(host=_conf["_myhost"], user=_conf["_myuser"], passwd=_conf["_mypasswd"], db=_conf["_mydb"], ssl_cert=_conf["_ssl_cert"], ssl_key=_conf["_ssl_key"], ssl_ca=_conf["_ssl_ca"], client_flags=[ClientFlag.SSL])
+    _con = mysql.connector.connect(host=_conf["_myhost"], user=_conf["_myuser"], passwd=_conf["_mypasswd"], db=_conf["_mydb"])
     _con.close()
 
     socket.setdefaulttimeout(int(_conf["_bindtimeout"]))

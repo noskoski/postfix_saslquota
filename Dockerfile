@@ -1,7 +1,5 @@
 FROM python:3.10
 
-MAINTAINER "leandro@alternativalinux.net"
-
 RUN mkdir /postfix_saslquota/ -p && \
         apt-get update && \
         apt-get install -y --no-install-recommends  net-tools ssl-cert && \
@@ -13,6 +11,8 @@ RUN     rm -f   /etc/localtime && \
 
 RUN 	chmod ugo+rx /etc/ssl/* -R
 #RUN make-ssl-cert generate-default-snakeoil --force-overwrite 
+
+COPY /src/ /postfix_saslquota/
 
 
 RUN useradd -ms /bin/bash www && \
@@ -36,11 +36,10 @@ ENV _bind=0.0.0.0 \
   _loghandler=stdout \
   _quotafile=quotarules.json
 
-COPY * /postfix_saslquota/
 
-RUN mv  /postfix_saslquota/quotarules.json.orig  /postfix_saslquota/quotarules.json
+RUN  mv  /postfix_saslquota/quotarules.json.orig  /postfix_saslquota/quotarules.json
 
-RUN pip3 install mysql-connector-python
+RUN  pip3 install mysql-connector-python
 
 
 HEALTHCHECK CMD netstat -an | grep ${_bindport} > /dev/null; if [ 0 != $? ]; then exit 1; fi;
