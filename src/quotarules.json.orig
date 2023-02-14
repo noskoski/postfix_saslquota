@@ -1,17 +1,17 @@
 {
    "default" : {
-     "period": 120,
+     "period": 86400,
      "msgquota": 500,
      "msg": " Ops!!! Você já mandou o limite de 500 emails no intervalo de 1 dia, tente novamente mais tarde "
    },
-   "localhost" : {
-     "period": 1200,
-     "msgquota": 5000,
+   "sistmas.ciga.sc.gov.br" : {
+     "period": 86400,
+     "msgquota": 1000,
      "msg": " Ops!!! você já mandou o limite de 500 emails no intervalo de 1 dia, tente novamente mais tarde "
    },
-   "root@localhost" : {
-     "period": 300,
-     "msgquota": 50,
+   "suporte@sistemas.ciga.sc.gov.br" : {
+     "period": 86400,
+     "msgquota": 2000,
      "msg": " Ops!!! você já mandou o limite de 50 emails no intervalo de 1 dia, tente novamente mais tarde  "
    }
 }
