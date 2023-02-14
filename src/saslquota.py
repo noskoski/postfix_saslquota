@@ -146,7 +146,7 @@ class Job(threading.Thread):
             try:
                 _con = mysql.connector.connect(host=_conf["_myhost"], user=_conf["_myuser"], passwd=_conf["_mypasswd"], db=_conf["_mydb"])
                 _cursor = _con.cursor()
-                _cursor.execute("select count(*) from log where sasl_username =%s  and `date` >= DATE_SUB(now(6), INTERVAL %s SECOND)",(self.__sasl_username,_period,))
+                _cursor.execute("select count(*) from saslquota_log where sasl_username =%s  and `date` >= DATE_SUB(now(6), INTERVAL %s SECOND)",(self.__sasl_username,_period,))
                 record = _cursor.fetchone()
 
                 _log = self.name + ' sasl_username=' + self.__sasl_username + ", rcpt=" + str(self.__recipient) + ", rule=" + _rule + ", quota=" + str(record[0]+1) + "/" + str(_msgquota)  + "(" +  "{0:.2f}".format( ( record[0] + 1 ) / _msgquota * 100) + "%), period=" + str(_period)
@@ -162,7 +162,7 @@ class Job(threading.Thread):
                     logging.info(_log + ", action=ACCEPT ")
                     try:
                         _cursor = _con.cursor()
-                        _cursor.execute("insert into log (sasl_username, date ) values (%s,now(6)) ",
+                        _cursor.execute("insert into saslquota_log (sasl_username, date ) values (%s,now(6)) ",
                                         (self.__sasl_username,))
                         _con.commit()
                     except:
