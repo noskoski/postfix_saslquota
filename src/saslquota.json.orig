@@ -2,11 +2,14 @@
    "_bind" : "0.0.0.0",
    "_bindport" : 10008,
    "_bindtimeout" :  45,
-   "_myhost" : "mysql",
+   "_myhost" : "127.0.0.1",
    "_myuser" : "saslquota",
-   "_mypasswd" : "1a2b3c",
+   "_mypasswd" : "XXXXXXXXX",
    "_mydb": "saslquota",
    "_logfacility": "mail",
    "_loglevel": "DEBUG",
+   "_loghandler": "syslog",
+   "_logaddress": "localhost",
+   "_logport": "514",
    "_quotafile": "quotarules.json"
 }
